@@ -2,6 +2,7 @@ package com.example.stora
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -111,40 +112,53 @@ fun AuthScreen() {
     )
 
     // --- Layout Utama ---
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)   // ⟵ WAJIB supaya lengkung terlihat putih
+    ) {
 
         // --- BAGIAN BIRU (ATAS) ---
+        val blueCorner by animateDpAsState(
+            targetValue = if (authState != AuthScreenState.WELCOME) 47.dp else 0.dp,
+            animationSpec = tween(durationMillis = animationDuration),
+            label = "Blue BG Corner"
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(blueBgWeight) // Tinggi animatif
-                .background(StoraBlueDark)
-                .clip(
+                // Terapkan shape langsung di background agar sudut membentuk warna biru juga
+                .clip(                                   // ⟵ clip dulu
                     RoundedCornerShape(
-                        bottomStart = if (authState != AuthScreenState.WELCOME) 30.dp else 0.dp,
-                        bottomEnd = if (authState != AuthScreenState.WELCOME) 30.dp else 0.dp
+                        bottomStart = blueCorner,
+                        bottomEnd   = blueCorner
+                    )
+                )
+                .background(
+                    color = StoraBlueDark,
+                    shape = RoundedCornerShape(
+                        bottomStart = blueCorner,
+                        bottomEnd   = blueCorner
                     )
                 )
                 .padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            // AnimatedContent untuk transisi logo dan teks
             AnimatedContent(
                 targetState = authState,
                 label = "Header Content Animation",
                 transitionSpec = {
-                    // Animasi fade in/out saat berganti header
                     fadeIn(animationSpec = tween(animationDuration)) togetherWith
                             fadeOut(animationSpec = tween(animationDuration))
                 }
             ) { state ->
                 when (state) {
                     AuthScreenState.WELCOME, AuthScreenState.LANDING -> {
-                        // Header untuk Welcome & Landing (Besar, di tengah)
                         WelcomeLandingHeader()
                     }
                     else -> {
-                        // Header untuk Login & Sign Up (Kecil, di atas)
                         LoginSignupHeader()
                     }
                 }
