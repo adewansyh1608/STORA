@@ -10,7 +10,6 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Warna Kustom STORA
 val StoraBlueDark = Color(0xFF133A57)
 val StoraBlueButton = Color(0xFF37729C)
 val StoraYellowButton = Color(0xFFEFBF6A)

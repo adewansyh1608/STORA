@@ -43,35 +43,24 @@ android {
 }
 
 dependencies {
-
-    // Dependensi Inti (dari 'libs')
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-
-    // 1. GUNAKAN BOM (BILL OF MATERIALS)
-    // Ini akan MENGATUR versi untuk semua library Compose di bawahnya
-    // Kita hardcode versinya untuk kepastian
     implementation(platform(libs.androidx.compose.bom.v20240500))
-
-    // 2. IMPLEMENTASI COMPOSE (TANPA VERSI)
-    // BoM akan otomatis memberi mereka versi yang kompatibel
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
     implementation(libs.androidx.foundation)
-    implementation(libs.material3) // Akan memperbaiki 'outlinedTextFieldColors'
-    implementation(libs.androidx.animation) // Akan memperbaiki 'AnimatedVisibility'
+    implementation(libs.material3)
+    implementation(libs.androidx.animation)
 
-    // 3. DEPENDENSI LAIN (Tetap gunakan versi manual)
     implementation(libs.coil.compose)
     implementation(libs.androidx.material.icons.extended)
 
-    // 4. DEPENDENSI TESTING & DEBUG
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom)) // BoM untuk testing
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

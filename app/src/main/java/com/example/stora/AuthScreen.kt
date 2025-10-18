@@ -62,8 +62,6 @@ import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellowButton
 import kotlinx.coroutines.delay
-
-// Enum untuk mengelola status halaman
 enum class AuthScreenState {
     WELCOME,
     LANDING,
@@ -73,34 +71,27 @@ enum class AuthScreenState {
 
 @Composable
 fun AuthScreen() {
-    // State untuk mengontrol halaman mana yang tampil
     var authState by rememberSaveable { mutableStateOf(AuthScreenState.WELCOME) }
 
-    // Durasi animasi
-    val animationDuration = 1000 // 1 detik
+    val animationDuration = 1000
 
-    // Efek untuk splash screen 3 detik
     LaunchedEffect(authState) {
         if (authState == AuthScreenState.WELCOME) {
-            delay(3000) // Tampil selama 3 detik
-            authState = AuthScreenState.LANDING // Pindah ke Landing
+            delay(3000)
+            authState = AuthScreenState.LANDING
         }
     }
 
-    // --- Animasi Utama ---
-
-    // 1. Animasi berat (height) untuk latar belakang biru
     val blueBgWeight by animateFloatAsState(
         targetValue = when (authState) {
-            AuthScreenState.WELCOME -> 1f    // 100% tinggi
-            AuthScreenState.LANDING -> 0.65f // 65% tinggi
-            else -> 0.3f                      // 30% tinggi
+            AuthScreenState.WELCOME -> 1f
+            AuthScreenState.LANDING -> 0.65f
+            else -> 0.3f
         },
         animationSpec = tween(durationMillis = animationDuration),
         label = "Blue BG Weight"
     )
 
-    // 2. Animasi berat (height) untuk latar belakang putih
     val whiteBgWeight by animateFloatAsState(
         targetValue = when (authState) {
             AuthScreenState.WELCOME -> 0f
@@ -111,14 +102,12 @@ fun AuthScreen() {
         label = "White BG Weight"
     )
 
-    // --- Layout Utama ---
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)   // ⟵ WAJIB supaya lengkung terlihat putih
+            .background(Color.White)
     ) {
 
-        // --- BAGIAN BIRU (ATAS) ---
         val blueCorner by animateDpAsState(
             targetValue = if (authState != AuthScreenState.WELCOME) 47.dp else 0.dp,
             animationSpec = tween(durationMillis = animationDuration),
@@ -128,9 +117,8 @@ fun AuthScreen() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(blueBgWeight) // Tinggi animatif
-                // Terapkan shape langsung di background agar sudut membentuk warna biru juga
-                .clip(                                   // ⟵ clip dulu
+                .fillMaxHeight(blueBgWeight)
+                .clip(
                     RoundedCornerShape(
                         bottomStart = blueCorner,
                         bottomEnd   = blueCorner
@@ -165,15 +153,13 @@ fun AuthScreen() {
             }
         }
 
-        // --- BAGIAN PUTIH (BAWAH) ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight() // Mengisi sisa tinggi
+                .fillMaxHeight()
                 .background(Color.White)
                 .padding(horizontal = 32.dp, vertical = 24.dp)
         ) {
-            // Konten dinamis berdasarkan status
             androidx.compose.animation.AnimatedVisibility(
                 visible = authState == AuthScreenState.LANDING,
                 modifier = Modifier.fillMaxSize(),
@@ -211,11 +197,9 @@ fun AuthScreen() {
     }
 }
 
-// --- Komponen Header ---
-
 @Composable
 fun WelcomeLandingHeader() {
-    // Sesuai Gambar 1 & 2
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -246,39 +230,37 @@ fun WelcomeLandingHeader() {
 
 @Composable
 fun LoginSignupHeader() {
-    // Sesuai Gambar 3 & 4
+
     Row(
         modifier = Modifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center // Pusatkan Row
+        horizontalArrangement = Arrangement.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.stora_logo),
             contentDescription = "Stora Logo",
-            modifier = Modifier.size(60.dp), // Logo dikecilkan
+            modifier = Modifier.size(60.dp),
             contentScale = ContentScale.Fit
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = "STORA",
             color = StoraWhite,
-            fontSize = 36.sp, // Teks dikecilkan
+            fontSize = 36.sp,
             fontWeight = FontWeight.Bold
         )
     }
 }
 
-// --- Komponen Tombol & Form ---
 
 @Composable
 fun LandingButtons(onLoginClicked: () -> Unit, onSignUpClicked: () -> Unit) {
-    // Sesuai Gambar 2
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Button LOGIN
+
         Button(
             onClick = onLoginClicked,
             shape = RoundedCornerShape(50),
@@ -295,15 +277,14 @@ fun LandingButtons(onLoginClicked: () -> Unit, onSignUpClicked: () -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Button SIGN UP (dengan style khusus)
         Button(
             onClick = onSignUpClicked,
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
-                containerColor = StoraYellowButton.copy(alpha = 0.43f), // Transparansi 43%
-                contentColor = StoraBlueButton // Font color #37729C
+                containerColor = StoraYellowButton.copy(alpha = 0.43f),
+                contentColor = StoraBlueButton
             ),
-            border = BorderStroke(2.dp, StoraYellowButton), // Stroke 2dp
+            border = BorderStroke(2.dp, StoraYellowButton),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
@@ -315,7 +296,7 @@ fun LandingButtons(onLoginClicked: () -> Unit, onSignUpClicked: () -> Unit) {
 
 @Composable
 fun LoginForm(onSignUpClicked: () -> Unit) {
-    // Sesuai Gambar 3
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -356,7 +337,7 @@ fun LoginForm(onSignUpClicked: () -> Unit) {
 
         Text(
             text = "Sign Up",
-            color = StoraYellowButton, // Font color #EFBF6A
+            color = StoraYellowButton,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             modifier = Modifier.clickable { onSignUpClicked() }
@@ -366,7 +347,7 @@ fun LoginForm(onSignUpClicked: () -> Unit) {
 
 @Composable
 fun SignUpForm(onLoginClicked: () -> Unit) {
-    // Sesuai Gambar 4
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -401,15 +382,13 @@ fun SignUpForm(onLoginClicked: () -> Unit) {
 
         Text(
             text = "Login",
-            color = StoraYellowButton, // Font color #EFBF6A
+            color = StoraYellowButton,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             modifier = Modifier.clickable { onLoginClicked() }
         )
     }
 }
-
-// Komponen Input Field kustom
 @Composable
 fun StoraTextField(
     label: String,
