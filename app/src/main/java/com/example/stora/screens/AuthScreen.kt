@@ -1,4 +1,4 @@
-package com.example.stora
+package com.example.stora.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -57,11 +57,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.example.stora.R
+import com.example.stora.navigation.Routes
 import com.example.stora.ui.theme.StoraBlueButton
 import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellowButton
 import kotlinx.coroutines.delay
+
 enum class AuthScreenState {
     WELCOME,
     LANDING,
@@ -70,7 +74,7 @@ enum class AuthScreenState {
 }
 
 @Composable
-fun AuthScreen() {
+fun AuthScreen(navController: NavHostController) {
     var authState by rememberSaveable { mutableStateOf(AuthScreenState.WELCOME) }
 
     val animationDuration = 1000
@@ -160,7 +164,7 @@ fun AuthScreen() {
                 .background(Color.White)
                 .padding(horizontal = 32.dp, vertical = 24.dp)
         ) {
-            androidx.compose.animation.AnimatedVisibility(
+            this@Column.AnimatedVisibility(
                 visible = authState == AuthScreenState.LANDING,
                 modifier = Modifier.fillMaxSize(),
                 enter = slideInVertically(animationSpec = tween(animationDuration)) { it } + fadeIn(),
@@ -172,18 +176,19 @@ fun AuthScreen() {
                 )
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            this@Column.AnimatedVisibility(
                 visible = authState == AuthScreenState.LOGIN,
                 modifier = Modifier.fillMaxSize(),
                 enter = slideInVertically(animationSpec = tween(animationDuration)) { it } + fadeIn(),
                 exit = slideOutVertically(animationSpec = tween(animationDuration)) { it } + fadeOut()
             ) {
                 LoginForm(
-                    onSignUpClicked = { authState = AuthScreenState.SIGN_UP }
+                    onSignUpClicked = { authState = AuthScreenState.SIGN_UP },
+                    navController = navController
                 )
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            this@Column.AnimatedVisibility(
                 visible = authState == AuthScreenState.SIGN_UP,
                 modifier = Modifier.fillMaxSize(),
                 enter = slideInVertically(animationSpec = tween(animationDuration)) { it } + fadeIn(),
@@ -295,7 +300,7 @@ fun LandingButtons(onLoginClicked: () -> Unit, onSignUpClicked: () -> Unit) {
 }
 
 @Composable
-fun LoginForm(onSignUpClicked: () -> Unit) {
+fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -320,7 +325,7 @@ fun LoginForm(onSignUpClicked: () -> Unit) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* TODO: Handle Login */ },
+            onClick = { navController.navigate(Routes.HOME_SCREEN) },
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
                 containerColor = StoraBlueButton,
