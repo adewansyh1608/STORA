@@ -1,0 +1,527 @@
+package com.example.stora.screens
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.example.stora.data.DummyData
+import com.example.stora.data.InventoryItem
+import com.example.stora.data.LoansData
+import com.example.stora.ui.theme.StoraBlueDark
+import com.example.stora.ui.theme.StoraWhite
+import com.example.stora.ui.theme.StoraYellow
+import com.example.stora.ui.theme.StoraYellowButton
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.*
+
+data class LoanFormItem(
+    val inventoryItem: InventoryItem,
+    var quantity: Int
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoanFormScreen(
+    navController: NavHostController,
+    selectedItemIds: List<String>
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    
+    // Form states
+    var borrowerName by remember { mutableStateOf("") }
+    var borrowDate by remember { mutableStateOf("") }
+    var returnDate by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var showBorrowDatePicker by remember { mutableStateOf(false) }
+    var showReturnDatePicker by remember { mutableStateOf(false) }
+    
+    // Selected items with quantities
+    val loanItems = remember {
+        mutableStateListOf<LoanFormItem>().apply {
+            selectedItemIds.forEach { id ->
+                DummyData.inventoryItemList.find { it.id == id }?.let { item ->
+                    val availableQty = LoansData.getAvailableQuantity(item)
+                    if (availableQty > 0) {
+                        add(LoanFormItem(item, 1))
+                    }
+                }
+            }
+        }
+    }
+    
+    val textGray = Color(0xFF585858)
+    
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+    }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            // Image saved to imageUri
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        delay(100)
+        isVisible = true
+    }
+
+    Scaffold(
+        containerColor = StoraWhite,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "New Loans",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = StoraYellow
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = StoraWhite
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = StoraBlueDark
+                )
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(StoraBlueDark)
+                .padding(top = 24.dp)
+        ) {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = isVisible,
+                enter = slideInVertically(animationSpec = tween(800, delayMillis = 200)) { it } + fadeIn(animationSpec = tween(800, delayMillis = 200)),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = StoraWhite,
+                    shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
+                ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 32.dp, bottom = 24.dp)
+                ) {
+                    Text(
+                        text = "Lengkapi Data Peminjaman Barang",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = StoraBlueDark,
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    )
+                    
+                    // Selected Items with Quantity Controls
+                    Text(
+                        text = "Barang yang Dipinjam",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = StoraBlueDark,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    loanItems.forEach { loanItem ->
+                        LoanItemQuantityCard(
+                            loanFormItem = loanItem,
+                            onQuantityChange = { newQuantity ->
+                                val index = loanItems.indexOf(loanItem)
+                                if (index != -1) {
+                                    loanItems[index] = loanItem.copy(quantity = newQuantity)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Borrower Name
+                    Text(
+                        text = "Nama Peminjam",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = textGray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = borrowerName,
+                        onValueChange = { borrowerName = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Masukkan nama peminjam") },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = StoraWhite,
+                            unfocusedContainerColor = StoraWhite,
+                            focusedIndicatorColor = StoraBlueDark,
+                            unfocusedIndicatorColor = Color(0xFFE0E0E0)
+                        )
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Date Pickers Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Borrow Date
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Tanggal Peminjaman",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = textGray,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            
+                            OutlinedTextField(
+                                value = borrowDate,
+                                onValueChange = {},
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                                placeholder = { Text("Pilih tanggal", fontSize = 12.sp) },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Filled.CalendarToday,
+                                        contentDescription = "Calendar",
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { showBorrowDatePicker = true }
+                                    )
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = StoraWhite,
+                                    unfocusedContainerColor = StoraWhite,
+                                    focusedIndicatorColor = StoraBlueDark,
+                                    unfocusedIndicatorColor = Color(0xFFE0E0E0)
+                                )
+                            )
+                        }
+                        
+                        // Return Date
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Tanggal Pengembalian",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = textGray,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            
+                            OutlinedTextField(
+                                value = returnDate,
+                                onValueChange = {},
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                                placeholder = { Text("Pilih tanggal", fontSize = 12.sp) },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Filled.CalendarToday,
+                                        contentDescription = "Calendar",
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { showReturnDatePicker = true }
+                                    )
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = StoraWhite,
+                                    unfocusedContainerColor = StoraWhite,
+                                    focusedIndicatorColor = StoraBlueDark,
+                                    unfocusedIndicatorColor = Color(0xFFE0E0E0)
+                                )
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Image Upload
+                    Text(
+                        text = "Unggah Gambar Barang",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = StoraBlueDark,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF5F5F5))
+                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (imageUri != null) {
+                            Image(
+                                painter = rememberAsyncImagePainter(imageUri),
+                                contentDescription = "Selected Image",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.CameraAlt,
+                                    contentDescription = "Upload",
+                                    tint = Color(0xFF9E9E9E),
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Klik Untuk Mengunggah gambar",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    // Save Button
+                    Button(
+                        onClick = {
+                            // Save each loan item
+                            loanItems.forEach { loanFormItem ->
+                                LoansData.addLoan(
+                                    name = loanFormItem.inventoryItem.name,
+                                    code = loanFormItem.inventoryItem.noinv,
+                                    quantity = loanFormItem.quantity,
+                                    borrower = borrowerName,
+                                    borrowDate = borrowDate,
+                                    returnDate = returnDate,
+                                    imageUri = imageUri?.toString()
+                                )
+                            }
+                            // Navigate back to loans screen
+                            navController.popBackStack(com.example.stora.navigation.Routes.LOANS_SCREEN, false)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = StoraYellowButton
+                        ),
+                        enabled = borrowerName.isNotBlank() && borrowDate.isNotBlank() && returnDate.isNotBlank()
+                    ) {
+                        Text(
+                            text = "Save",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = StoraBlueDark
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+        }
+        }
+    }
+    
+    // Date Pickers
+    if (showBorrowDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showBorrowDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        borrowDate = sdf.format(Date(millis))
+                    }
+                    showBorrowDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBorrowDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+    
+    if (showReturnDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showReturnDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        returnDate = sdf.format(Date(millis))
+                    }
+                    showReturnDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReturnDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@Composable
+fun LoanItemQuantityCard(
+    loanFormItem: LoanFormItem,
+    onQuantityChange: (Int) -> Unit
+) {
+    val textGray = Color(0xFF585858)
+    val maxQuantity = LoansData.getAvailableQuantity(loanFormItem.inventoryItem)
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = StoraWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(60.dp)
+                    .background(StoraYellow)
+            )
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Item info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = loanFormItem.inventoryItem.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = StoraBlueDark
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = loanFormItem.inventoryItem.noinv,
+                    color = textGray,
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Tersedia: $maxQuantity",
+                    color = textGray,
+                    fontSize = 12.sp
+                )
+            }
+            
+            // Quantity controls
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        if (loanFormItem.quantity > 1) {
+                            onQuantityChange(loanFormItem.quantity - 1)
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Remove,
+                        contentDescription = "Kurangi",
+                        tint = if (loanFormItem.quantity > 1) StoraBlueDark else Color.Gray
+                    )
+                }
+                
+                Text(
+                    text = "${loanFormItem.quantity}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = StoraBlueDark,
+                    modifier = Modifier.widthIn(min = 24.dp)
+                )
+                
+                IconButton(
+                    onClick = {
+                        if (loanFormItem.quantity < maxQuantity) {
+                            onQuantityChange(loanFormItem.quantity + 1)
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Tambah",
+                        tint = if (loanFormItem.quantity < maxQuantity) StoraBlueDark else Color.Gray
+                    )
+                }
+            }
+        }
+    }
+}

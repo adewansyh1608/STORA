@@ -1,6 +1,5 @@
 package com.example.stora.screens
 
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,26 +21,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -61,14 +54,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.stora.ui.theme.STORATheme
 import com.example.stora.ui.theme.StoraBlueDark
-import com.example.stora.ui.theme.StoraYellowButton
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
-import kotlin.math.roundToInt
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.stora.navigation.Routes
 
 // Data class untuk item reminder
 data class Reminder(
@@ -81,9 +69,9 @@ data class Reminder(
 // Data dummy untuk ditampilkan
 val dummyReminders = listOf(
     Reminder(1, "Inventory", "Cek Kondisi Barang B", Icons.Outlined.Inventory2),
-    Reminder(2, "Loans", "Hari Ini Pengembalian Barang B", Icons.Outlined.ReceiptLong),
+    Reminder(2, "Loans", "Hari Ini Pengembalian Barang B", Icons.AutoMirrored.Outlined.ReceiptLong),
     Reminder(3, "Inventory", "Cek Kondisi Barang A", Icons.Outlined.Inventory2),
-    Reminder(4, "Loans", "Pengembalian Barang C Telat", Icons.Outlined.ReceiptLong),
+    Reminder(4, "Loans", "Pengembalian Barang C Telat", Icons.AutoMirrored.Outlined.ReceiptLong),
     Reminder(5, "Inventory", "Stok Opname Bulanan", Icons.Outlined.Inventory2),
 )
 
