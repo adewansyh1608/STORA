@@ -7,6 +7,7 @@ object Routes {
     const val ADD_ITEM_SCREEN = "add_item"
 
     const val AUTH_SCREEN = "auth"
+    const val LOANS_SCREEN = "loans"
 
     fun detailScreen(itemId: String) = "detail/$itemId"
 }

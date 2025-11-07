@@ -73,7 +73,7 @@ fun InventoryScreen(navController: NavHostController) {
             }
         },
         bottomBar = {
-            StoraBottomBar(navController = navController)
+            StoraBottomNavigationBar(navController = navController)
         }
 
     ) { paddingValues ->
@@ -225,103 +225,6 @@ fun InventoryItemCard(item: InventoryItem, onClick: () -> Unit) {
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun StoraBottomBar(navController: NavHostController) {
-    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = StoraBlueDark,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        shadowElevation = 16.dp
-    ) {
-        NavigationBar(
-            containerColor = Color.Transparent,
-            contentColor = Color.White,
-            tonalElevation = 0.dp,
-            modifier = Modifier.height(80.dp)
-        ) {
-            NavigationBarItem(
-                selected = selectedItemIndex == 0,
-                onClick = { selectedItemIndex = 0 },
-                label = {
-                    Text(
-                        "Home",
-                        fontWeight = if (selectedItemIndex == 0) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 12.sp
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Filled.Home,
-                        contentDescription = "Home",
-                        modifier = Modifier.size(26.dp)
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                    indicatorColor = Color.Transparent
-                )
-            )
-
-            NavigationBarItem(
-                selected = selectedItemIndex == 1,
-                onClick = { selectedItemIndex = 1; navController.navigate(Routes.INVENTORY_SCREEN) },
-                label = {
-                    Text(
-                        "Inventory",
-                        fontWeight = if (selectedItemIndex == 1) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 12.sp
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Inventory2,
-                        contentDescription = "Inventory",
-                        modifier = Modifier.size(26.dp)
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                    indicatorColor = Color.Transparent
-                )
-            )
-
-            NavigationBarItem(
-                selected = selectedItemIndex == 2,
-                onClick = { selectedItemIndex = 2 },
-                label = {
-                    Text(
-                        "Loans",
-                        fontWeight = if (selectedItemIndex == 2) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 12.sp
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.ReceiptLong,
-                        contentDescription = "Loans",
-                        modifier = Modifier.size(26.dp)
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                    indicatorColor = Color.Transparent
-                )
-            )
         }
     }
 }

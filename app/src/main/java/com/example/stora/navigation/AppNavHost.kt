@@ -11,6 +11,7 @@ import com.example.stora.screens.DetailScreen
 import com.example.stora.screens.InventoryScreen
 import com.example.stora.screens.AuthScreen
 import com.example.stora.screens.HomeScreen
+import com.example.stora.screens.LoansScreen
 import androidx.compose.animation.fadeOut
 
 @Composable
@@ -123,6 +124,24 @@ fun AppNavHost(navController: NavHostController) {
             }
         ) {
             AddItemScreen(navController = navController)
+        }
+
+        composable(
+            route = Routes.LOANS_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
+            LoansScreen(navController = navController)
         }
     }
 }
