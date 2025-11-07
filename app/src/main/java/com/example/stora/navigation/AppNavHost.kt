@@ -12,7 +12,13 @@ import com.example.stora.screens.InventoryScreen
 import com.example.stora.screens.AuthScreen
 import com.example.stora.screens.HomeScreen
 import com.example.stora.screens.LoansScreen
+import com.example.stora.screens.NewLoanScreen
+import com.example.stora.screens.LoanFormScreen
+import com.example.stora.screens.DetailLoanScreen
+import com.example.stora.screens.DetailLoanHistoryScreen
 import androidx.compose.animation.fadeOut
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -128,6 +134,12 @@ fun AppNavHost(navController: NavHostController) {
 
         composable(
             route = Routes.LOANS_SCREEN,
+            arguments = listOf(
+                navArgument("showDeleteSnackbar") { 
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            ),
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
@@ -140,8 +152,110 @@ fun AppNavHost(navController: NavHostController) {
                     animationSpec = tween(500)
                 )
             }
+        ) { backStackEntry ->
+            val showDeleteSnackbar = backStackEntry.arguments?.getBoolean("showDeleteSnackbar") ?: false
+            LoansScreen(
+                navController = navController,
+                showDeleteSnackbar = showDeleteSnackbar
+            )
+        }
+
+        composable(
+            route = Routes.NEW_LOAN_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(500)
+                )
+            }
         ) {
-            LoansScreen(navController = navController)
+            NewLoanScreen(navController = navController)
+        }
+
+        composable(
+            route = Routes.LOAN_FORM_SCREEN,
+            arguments = listOf(
+                navArgument("selectedItems") { type = NavType.StringType }
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) { backStackEntry ->
+            val selectedItemsString = backStackEntry.arguments?.getString("selectedItems") ?: ""
+            val selectedItemsList = if (selectedItemsString.isNotEmpty()) {
+                selectedItemsString.split(",")
+            } else {
+                emptyList()
+            }
+            LoanFormScreen(
+                navController = navController,
+                selectedItemIds = selectedItemsList
+            )
+        }
+
+        composable(
+            route = Routes.DETAIL_LOAN_SCREEN,
+            arguments = listOf(
+                navArgument("loanId") { type = NavType.IntType }
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) { backStackEntry ->
+            val loanId = backStackEntry.arguments?.getInt("loanId") ?: 0
+            DetailLoanScreen(
+                navController = navController,
+                loanId = loanId
+            )
+        }
+
+        composable(
+            route = Routes.DETAIL_LOAN_HISTORY_SCREEN,
+            arguments = listOf(
+                navArgument("loanId") { type = NavType.IntType }
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) { backStackEntry ->
+            val loanId = backStackEntry.arguments?.getInt("loanId") ?: 0
+            DetailLoanHistoryScreen(
+                navController = navController,
+                loanId = loanId
+            )
         }
     }
 }

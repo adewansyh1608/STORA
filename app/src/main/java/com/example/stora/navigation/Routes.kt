@@ -7,7 +7,17 @@ object Routes {
     const val ADD_ITEM_SCREEN = "add_item"
 
     const val AUTH_SCREEN = "auth"
-    const val LOANS_SCREEN = "loans"
+    const val LOANS_SCREEN = "loans?showDeleteSnackbar={showDeleteSnackbar}"
+    const val NEW_LOAN_SCREEN = "new_loan"
+    
+    fun loansScreen(showDeleteSnackbar: Boolean = false) = 
+        "loans?showDeleteSnackbar=$showDeleteSnackbar"
+    const val LOAN_FORM_SCREEN = "loan_form/{selectedItems}"
+    const val DETAIL_LOAN_SCREEN = "detail_loan/{loanId}"
+    const val DETAIL_LOAN_HISTORY_SCREEN = "detail_loan_history/{loanId}"
 
     fun detailScreen(itemId: String) = "detail/$itemId"
+    fun loanFormScreen(selectedItems: String) = "loan_form/$selectedItems"
+    fun detailLoanScreen(loanId: Int) = "detail_loan/$loanId"
+    fun detailLoanHistoryScreen(loanId: Int) = "detail_loan_history/$loanId"
 }
