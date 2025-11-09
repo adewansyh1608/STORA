@@ -449,15 +449,13 @@ fun DetailLoanHistoryScreen(
                                 LoansData.deleteLoanHistory(loan.id)
                                 showDeleteDialog = false
                                 
-                                // Navigate back with snackbar parameter
-                                navController.navigate(Routes.loansScreen(showDeleteSnackbar = true)) {
-                                    popUpTo("loans") { 
-                                        inclusive = true
-                                        saveState = false
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = false
-                                }
+                                // Set result for previous screen
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("history_deleted", true)
+                                
+                                // Navigate back
+                                navController.popBackStack()
                             },
                             modifier = Modifier
                                 .weight(1f)

@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.stora.viewmodel.UserProfileViewModel
 import com.example.stora.screens.AddItemScreen
 import com.example.stora.screens.DetailScreen
 import com.example.stora.screens.InventoryScreen
@@ -16,12 +17,18 @@ import com.example.stora.screens.NewLoanScreen
 import com.example.stora.screens.LoanFormScreen
 import com.example.stora.screens.DetailLoanScreen
 import com.example.stora.screens.DetailLoanHistoryScreen
+import com.example.stora.screens.ProfileScreen
+import com.example.stora.screens.EditProfileScreen
+import com.example.stora.screens.SettingScreen
 import androidx.compose.animation.fadeOut
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(
+    navController: NavHostController,
+    userProfileViewModel: UserProfileViewModel
+) {
     NavHost(
         navController = navController,
         startDestination = Routes.AUTH_SCREEN
@@ -256,6 +263,66 @@ fun AppNavHost(navController: NavHostController) {
                 navController = navController,
                 loanId = loanId
             )
+        }
+
+        composable(
+            route = Routes.PROFILE_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
+            ProfileScreen(
+                navController = navController,
+                viewModel = userProfileViewModel
+            )
+        }
+
+        composable(
+            route = Routes.EDIT_PROFILE_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
+            EditProfileScreen(
+                navController = navController,
+                viewModel = userProfileViewModel
+            )
+        }
+
+        composable(
+            route = Routes.SETTING_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
+            SettingScreen(navController = navController)
         }
     }
 }
