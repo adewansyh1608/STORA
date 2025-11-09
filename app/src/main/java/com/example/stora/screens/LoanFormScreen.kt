@@ -60,6 +60,7 @@ fun LoanFormScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var showBorrowDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
+    var showImagePickerDialog by remember { mutableStateOf(false) }
     
     // Selected items with quantities
     val loanItems = remember {
@@ -300,7 +301,7 @@ fun LoanFormScreen(
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color(0xFFF5F5F5))
                             .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
-                            .clickable { imagePickerLauncher.launch("image/*") },
+                            .clickable { showImagePickerDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
                         if (imageUri != null) {
@@ -373,6 +374,22 @@ fun LoanFormScreen(
             }
         }
         }
+    }
+    
+    // Image Picker Dialog
+    if (showImagePickerDialog) {
+        LoanImagePickerDialog(
+            onDismiss = { showImagePickerDialog = false },
+            onGalleryClick = {
+                showImagePickerDialog = false
+                imagePickerLauncher.launch("image/*")
+            },
+            onCameraClick = {
+                showImagePickerDialog = false
+                // For camera, you would need to create a temporary file URI
+                // This is a simplified version
+            }
+        )
     }
     
     // Date Pickers
@@ -522,6 +539,108 @@ fun LoanItemQuantityCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoanImagePickerDialog(
+    onDismiss: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onCameraClick: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = "Pilih Sumber Gambar",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Gallery Option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onGalleryClick)
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(StoraBlueDark),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "Gallery",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = "Pilih dari Galeri",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Camera Option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onCameraClick)
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(StoraBlueDark),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Camera",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = "Ambil Foto",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

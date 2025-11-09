@@ -46,17 +46,17 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.example.stora.ui.theme.STORATheme
 import com.example.stora.ui.theme.StoraBlueDark
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.runtime.remember
+import com.example.stora.data.DummyData
+import com.example.stora.data.LoansData
 
 // Data class untuk item reminder
 data class Reminder(
@@ -91,7 +91,7 @@ fun HomeScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxSize()
         ) {
             // Top Bar
-            StoraTopBar()
+            StoraTopBar(navController = navController)
 
             // Summary Cards dengan animasi alpha dan offset
             val cardsAlpha by animateFloatAsState(
@@ -181,7 +181,7 @@ fun HomeScreen(navController: NavHostController) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StoraTopBar() {
+private fun StoraTopBar(navController: NavHostController) {
     TopAppBar(
         title = {
             Text(
@@ -191,7 +191,9 @@ private fun StoraTopBar() {
             )
         },
         actions = {
-            IconButton(onClick = { /* TODO: Navigasi ke Profil */ }) {
+            IconButton(onClick = { 
+                navController.navigate(com.example.stora.navigation.Routes.PROFILE_SCREEN)
+            }) {
                 Icon(
                     imageVector = Icons.Outlined.AccountCircle,
                     contentDescription = "Profile",
@@ -213,6 +215,14 @@ private fun StoraTopBar() {
  */
 @Composable
 private fun SummaryCardsRow() {
+    // Hitung total inventaris dari DummyData
+    val totalInventory = remember { DummyData.inventoryItemList.size }
+    
+    // Hitung total barang yang sedang dipinjam
+    val totalLoaned = remember(LoansData.loansOnLoan.size) {
+        LoansData.loansOnLoan.sumOf { it.quantity }
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -221,14 +231,14 @@ private fun SummaryCardsRow() {
     ) {
         SummaryCard(
             title = "Total Inventaris",
-            count = "20",
+            count = totalInventory.toString(),
             icon = Icons.Outlined.Inventory2,
             modifier = Modifier.weight(1f)
         )
         Spacer(modifier = Modifier.width(16.dp))
         SummaryCard(
             title = "Barang Di Pinjam",
-            count = "5",
+            count = totalLoaned.toString(),
             icon = Icons.AutoMirrored.Outlined.ReceiptLong,
             modifier = Modifier.weight(1f)
         )
@@ -379,16 +389,5 @@ private fun ReminderItem(reminder: Reminder) {
                 )
             }
         }
-    }
-}
-
-/**
- * Preview
- */
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    STORATheme {
-        HomeScreen(navController = rememberNavController())
     }
 }

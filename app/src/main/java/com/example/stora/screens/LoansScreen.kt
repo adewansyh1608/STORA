@@ -47,15 +47,23 @@ fun LoansScreen(
     val textGray = Color(0xFF585858)
     val dividerYellow = Color(0xFFEFBF6A)
     
-    // Show snackbar when returning from delete
-    LaunchedEffect(key1 = showDeleteSnackbar) {
-        if (showDeleteSnackbar) {
-            scope.launch {
-                snackbarHostState.showSnackbar(
-                    message = "History berhasil dihapus",
-                    duration = SnackbarDuration.Short
-                )
-            }
+    // Check for delete result from previous screen
+    val deleteResult = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<Boolean>("history_deleted")
+        ?.value
+    
+    // Show snackbar when delete result is received
+    LaunchedEffect(deleteResult) {
+        if (deleteResult == true) {
+            snackbarHostState.showSnackbar(
+                message = "History berhasil dihapus",
+                duration = SnackbarDuration.Short
+            )
+            // Clear the result immediately to prevent showing again
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("history_deleted", false)
         }
     }
 
