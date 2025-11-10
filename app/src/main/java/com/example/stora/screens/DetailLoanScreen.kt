@@ -1,8 +1,10 @@
 package com.example.stora.screens
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -36,6 +38,7 @@ import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellow
 import com.example.stora.ui.theme.StoraYellowButton
+import com.example.stora.utils.FileUtils
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +47,10 @@ fun DetailLoanScreen(
     navController: NavHostController,
     loanId: Int
 ) {
+    val context = LocalContext.current
     var isVisible by remember { mutableStateOf(false) }
     var returnImageUri by remember { mutableStateOf<Uri?>(null) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showImagePickerDialog by remember { mutableStateOf(false) }
     
     val loan = remember(loanId) {
@@ -59,6 +64,27 @@ fun DetailLoanScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         returnImageUri = uri
+    }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            returnImageUri = tempCameraUri
+        }
+    }
+    
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            tempCameraUri = FileUtils.createImageUri(context)
+            tempCameraUri?.let { uri ->
+                cameraLauncher.launch(uri)
+            }
+        }
     }
     
     LaunchedEffect(Unit) {
@@ -358,8 +384,7 @@ fun DetailLoanScreen(
                 },
                 onCameraClick = {
                     showImagePickerDialog = false
-                    // For camera, you would need to create a temporary file URI
-                    // This is a simplified version
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             )
         }

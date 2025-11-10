@@ -1,8 +1,10 @@
 package com.example.stora.screens
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -31,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.stora.ui.theme.StoraBlueDark
+import com.example.stora.utils.FileUtils
 import com.example.stora.viewmodel.UserProfileViewModel
 import kotlinx.coroutines.delay
 
@@ -40,19 +43,16 @@ fun EditProfileScreen(
     navController: NavHostController,
     viewModel: UserProfileViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val userProfile by viewModel.userProfile.collectAsState()
     
     var name by remember { mutableStateOf(userProfile.name) }
     var description by remember { mutableStateOf(userProfile.address) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(userProfile.profileImageUri) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     
     var showImagePickerDialog by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(100)
-        isVisible = true
-    }
 
     // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -68,8 +68,25 @@ fun EditProfileScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            // Image saved to selectedImageUri
+            selectedImageUri = tempCameraUri
         }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            tempCameraUri = FileUtils.createImageUri(context)
+            tempCameraUri?.let { uri ->
+                cameraLauncher.launch(uri)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        isVisible = true
     }
 
     Box(
@@ -265,9 +282,7 @@ fun EditProfileScreen(
                 },
                 onCameraClick = {
                     showImagePickerDialog = false
-                    // For camera, you would need to create a temporary file URI
-                    // This is a simplified version
-                    // In production, implement proper camera functionality
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             )
         }

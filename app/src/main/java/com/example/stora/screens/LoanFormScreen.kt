@@ -1,8 +1,10 @@
 package com.example.stora.screens
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -36,6 +38,7 @@ import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellow
 import com.example.stora.ui.theme.StoraYellowButton
+import com.example.stora.utils.FileUtils
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,6 +54,7 @@ fun LoanFormScreen(
     navController: NavHostController,
     selectedItemIds: List<String>
 ) {
+    val context = LocalContext.current
     var isVisible by remember { mutableStateOf(false) }
     
     // Form states
@@ -58,6 +62,7 @@ fun LoanFormScreen(
     var borrowDate by remember { mutableStateOf("") }
     var returnDate by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showBorrowDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
     var showImagePickerDialog by remember { mutableStateOf(false) }
@@ -90,7 +95,19 @@ fun LoanFormScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            // Image saved to imageUri
+            imageUri = tempCameraUri
+        }
+    }
+    
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            tempCameraUri = FileUtils.createImageUri(context)
+            tempCameraUri?.let { uri ->
+                cameraLauncher.launch(uri)
+            }
         }
     }
     
@@ -386,8 +403,7 @@ fun LoanFormScreen(
             },
             onCameraClick = {
                 showImagePickerDialog = false
-                // For camera, you would need to create a temporary file URI
-                // This is a simplified version
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         )
     }
@@ -405,16 +421,20 @@ fun LoanFormScreen(
                     }
                     showBorrowDatePicker = false
                 }) {
-                    Text("OK")
+                    Text("OK", color = StoraBlueDark)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showBorrowDatePicker = false }) {
-                    Text("Cancel")
+                    Text("Batal", color = Color.Gray)
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                showModeToggle = false
+            )
         }
     }
     
@@ -430,16 +450,20 @@ fun LoanFormScreen(
                     }
                     showReturnDatePicker = false
                 }) {
-                    Text("OK")
+                    Text("OK", color = StoraBlueDark)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showReturnDatePicker = false }) {
-                    Text("Cancel")
+                    Text("Batal", color = Color.Gray)
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                showModeToggle = false
+            )
         }
     }
 }
