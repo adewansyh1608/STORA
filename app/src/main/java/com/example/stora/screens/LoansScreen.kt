@@ -33,6 +33,16 @@ import com.example.stora.data.LoansData
 import com.example.stora.data.LoanItem
 import kotlinx.coroutines.launch
 
+data class GroupedLoanItem(
+    val groupId: Int,
+    val borrower: String?,
+    val borrowDate: String?,
+    val returnDate: String?,
+    val totalQuantity: Int,
+    val items: List<LoanItem>,
+    val firstItemId: Int
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoansScreen(
@@ -56,14 +66,17 @@ fun LoansScreen(
     // Show snackbar when delete result is received
     LaunchedEffect(deleteResult) {
         if (deleteResult == true) {
-            snackbarHostState.showSnackbar(
-                message = "History berhasil dihapus",
-                duration = SnackbarDuration.Short
-            )
-            // Clear the result immediately to prevent showing again
-            navController.currentBackStackEntry
-                ?.savedStateHandle
-                ?.set("history_deleted", false)
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message = "History berhasil dihapus",
+                    duration = SnackbarDuration.Short,
+                    withDismissAction = true
+                )
+                // Clear the result after snackbar is shown
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("history_deleted", false)
+            }
         }
     }
 
@@ -75,10 +88,28 @@ fun LoansScreen(
             currentItems
         } else {
             currentItems.filter { item ->
+                item.borrower?.contains(searchQuery, ignoreCase = true) == true ||
                 item.name.contains(searchQuery, ignoreCase = true) ||
                 item.code.contains(searchQuery, ignoreCase = true)
             }
         }
+    }
+    
+    // Group items by groupId and create aggregated display items
+    val groupedItems = remember(filteredItems) {
+        filteredItems
+            .groupBy { it.groupId }
+            .map { (groupId, items) ->
+                GroupedLoanItem(
+                    groupId = groupId,
+                    borrower = items.firstOrNull()?.borrower,
+                    borrowDate = items.firstOrNull()?.borrowDate,
+                    returnDate = items.firstOrNull()?.returnDate,
+                    totalQuantity = items.sumOf { it.quantity },
+                    items = items,
+                    firstItemId = items.firstOrNull()?.id ?: -1
+                )
+            }
     }
 
     Scaffold(
@@ -214,7 +245,7 @@ fun LoansScreen(
                         color = StoraWhite
                     )
                 }
-            } else if (filteredItems.isEmpty()) {
+            } else if (groupedItems.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -227,19 +258,17 @@ fun LoansScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(filteredItems, key = { it.id }) { item ->
+                    items(groupedItems, key = { it.groupId }) { groupedItem ->
                         AnimatedVisibility(
                             visible = true,
                             enter = fadeIn(animationSpec = tween(500)) + slideInVertically(initialOffsetY = { it / 2 })
                         ) {
-                            LoanItemCard(item = item, isHistory = selectedTab == 1) {
-                                // Navigate to appropriate detail screen
+                            LoanGroupCard(groupedItem = groupedItem, isHistory = selectedTab == 1) {
+                                // Navigate to detail screen with firstItemId to show all items in group
                                 if (selectedTab == 1) {
-                                    // Loan History - navigate to DetailLoanHistoryScreen
-                                    navController.navigate(Routes.detailLoanHistoryScreen(item.id))
+                                    navController.navigate(Routes.detailLoanHistoryScreen(groupedItem.firstItemId))
                                 } else {
-                                    // Items on Loan - navigate to DetailLoanScreen
-                                    navController.navigate(Routes.detailLoanScreen(item.id))
+                                    navController.navigate(Routes.detailLoanScreen(groupedItem.firstItemId))
                                 }
                             }
                         }
@@ -279,8 +308,8 @@ fun TabButton(
 }
 
 @Composable
-fun LoanItemCard(
-    item: LoanItem,
+fun LoanGroupCard(
+    groupedItem: GroupedLoanItem,
     isHistory: Boolean,
     onClick: () -> Unit
 ) {
@@ -310,19 +339,24 @@ fun LoanItemCard(
                     .weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
+                // Nama Peminjam
                 Text(
-                    text = item.name,
+                    text = groupedItem.borrower ?: "-",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color = StoraBlueDark
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+                
+                // Tanggal Peminjaman
                 Text(
-                    text = item.code,
+                    text = groupedItem.borrowDate ?: "-",
                     color = textGray,
-                    fontSize = 14.sp
+                    fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                
+                // Total Jumlah Barang
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Filled.Widgets,
@@ -332,9 +366,9 @@ fun LoanItemCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "= ${item.quantity}",
+                        text = "${groupedItem.totalQuantity} barang",
                         color = textGray,
-                        fontSize = 14.sp
+                        fontSize = 12.sp
                     )
                 }
             }

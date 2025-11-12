@@ -45,7 +45,8 @@ import java.util.*
 
 data class LoanFormItem(
     val inventoryItem: InventoryItem,
-    var quantity: Int
+    var quantity: Int,
+    var imageUri: Uri? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,11 +62,10 @@ fun LoanFormScreen(
     var borrowerName by remember { mutableStateOf("") }
     var borrowDate by remember { mutableStateOf("") }
     var returnDate by remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showBorrowDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
-    var showImagePickerDialog by remember { mutableStateOf(false) }
+    var selectedItemForPhoto by remember { mutableStateOf<Int?>(null) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     
     // Selected items with quantities
     val loanItems = remember {
@@ -87,7 +87,12 @@ fun LoanFormScreen(
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUri = uri
+        selectedItemForPhoto?.let { index ->
+            if (index >= 0 && index < loanItems.size) {
+                loanItems[index] = loanItems[index].copy(imageUri = uri)
+            }
+        }
+        selectedItemForPhoto = null
     }
     
     // Camera launcher
@@ -95,7 +100,12 @@ fun LoanFormScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            imageUri = tempCameraUri
+            selectedItemForPhoto?.let { index ->
+                if (index >= 0 && index < loanItems.size) {
+                    loanItems[index] = loanItems[index].copy(imageUri = tempCameraUri)
+                }
+            }
+            selectedItemForPhoto = null
         }
     }
     
@@ -302,54 +312,133 @@ fun LoanFormScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Image Upload
-                    Text(
-                        text = "Unggah Gambar Barang",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = StoraBlueDark,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF5F5F5))
-                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
-                            .clickable { showImagePickerDialog = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (imageUri != null) {
-                            Image(
-                                painter = rememberAsyncImagePainter(imageUri),
-                                contentDescription = "Selected Image",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                    // Show photo upload section based on number of items
+                    if (loanItems.size == 1) {
+                        // Single item: show photo only for that item
+                        val loanItem = loanItems[0]
+                        val index = 0
+                        
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Foto Barang",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = StoraBlueDark,
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
-                        } else {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                            
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFF5F5F5))
+                                    .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        selectedItemForPhoto = index
+                                    },
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.CameraAlt,
-                                    contentDescription = "Upload",
-                                    tint = Color(0xFF9E9E9E),
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Klik Untuk Mengunggah gambar",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF9E9E9E)
-                                )
+                                if (loanItem.imageUri != null) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(loanItem.imageUri),
+                                        contentDescription = "Item Photo",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CameraAlt,
+                                            contentDescription = "Upload",
+                                            tint = Color(0xFF9E9E9E),
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Klik untuk mengambil foto",
+                                            fontSize = 13.sp,
+                                            color = Color(0xFF9E9E9E),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
                             }
                         }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                    } else if (loanItems.size >= 2) {
+                        // Multiple items: show photo for each item
+                        Text(
+                            text = "Foto Barang yang Dipinjam",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = StoraBlueDark,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        
+                        loanItems.forEachIndexed { index, loanItem ->
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = loanItem.inventoryItem.name,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = StoraBlueDark,
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                )
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(120.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFF5F5F5))
+                                        .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            selectedItemForPhoto = index
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (loanItem.imageUri != null) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(loanItem.imageUri),
+                                            contentDescription = "Item Photo",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CameraAlt,
+                                                contentDescription = "Upload",
+                                                tint = Color(0xFF9E9E9E),
+                                                modifier = Modifier.size(40.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                text = "Klik untuk foto",
+                                                fontSize = 12.sp,
+                                                color = Color(0xFF9E9E9E),
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                                
+                                Spacer(modifier = Modifier.height(14.dp))
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                     
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     // Save Button
                     Button(
@@ -363,7 +452,7 @@ fun LoanFormScreen(
                                     borrower = borrowerName,
                                     borrowDate = borrowDate,
                                     returnDate = returnDate,
-                                    imageUri = imageUri?.toString()
+                                    imageUri = loanFormItem.imageUri?.toString()
                                 )
                             }
                             // Navigate back to loans screen
@@ -394,15 +483,13 @@ fun LoanFormScreen(
     }
     
     // Image Picker Dialog
-    if (showImagePickerDialog) {
+    if (selectedItemForPhoto != null) {
         LoanImagePickerDialog(
-            onDismiss = { showImagePickerDialog = false },
+            onDismiss = { selectedItemForPhoto = null },
             onGalleryClick = {
-                showImagePickerDialog = false
                 imagePickerLauncher.launch("image/*")
             },
             onCameraClick = {
-                showImagePickerDialog = false
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         )

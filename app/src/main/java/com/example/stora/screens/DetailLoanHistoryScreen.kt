@@ -51,20 +51,26 @@ fun DetailLoanHistoryScreen(
         LoansData.loansHistory.find { it.id == loanId }
     }
     
+    // Get all items with the same groupId
+    val loanGroup = remember(loanId) {
+        loan?.let { firstLoan ->
+            LoansData.loansHistory.filter { it.groupId == firstLoan.groupId }
+        } ?: emptyList()
+    }
+    
     val textGray = Color(0xFF585858)
     
-    // Calculate return status
+    // Calculate return status based on actual return date vs deadline
     val returnStatus = remember(loan) {
-        if (loan?.borrowDate != null && loan.returnDate != null) {
+        if (loan?.borrowDate != null && loan?.returnDate != null && loan?.actualReturnDate != null) {
             try {
                 val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                val borrowDateParsed = sdf.parse(loan.borrowDate)
-                val returnDateParsed = sdf.parse(loan.returnDate)
-                val currentDate = Date()
+                val returnDateDeadline = sdf.parse(loan.returnDate) // Deadline (tanggal pengembalian yang dijanjikan)
+                val actualReturnDate = sdf.parse(loan.actualReturnDate) // Actual return date (tanggal benar-benar dikembalikan)
                 
-                if (borrowDateParsed != null && returnDateParsed != null) {
-                    // Check if returned on time
-                    if (currentDate.after(returnDateParsed)) {
+                if (returnDateDeadline != null && actualReturnDate != null) {
+                    // Check if returned after deadline
+                    if (actualReturnDate.after(returnDateDeadline)) {
                         "Telat" to Color(0xFFE53935) // Red
                     } else {
                         "Tepat Waktu" to Color(0xFF4CAF50) // Green
@@ -116,6 +122,15 @@ fun DetailLoanHistoryScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete",
+                            tint = StoraWhite
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = StoraBlueDark
                 )
@@ -144,59 +159,34 @@ fun DetailLoanHistoryScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 24.dp)
-                            .padding(top = 32.dp, bottom = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(top = 32.dp, bottom = 24.dp)
                     ) {
-                        // Item Name
+                        // Borrower Name at the top
                         Text(
-                            text = loan.name,
+                            text = loan.borrower ?: "-",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = StoraBlueDark
                         )
                         
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         
-                        // Borrower Info
+                        // Borrow and Return Dates
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Nama",
-                                    fontSize = 12.sp,
-                                    color = textGray,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = loan.borrower ?: "-",
-                                    fontSize = 16.sp,
-                                    color = StoraBlueDark,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Dates
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Dipinjam",
-                                    fontSize = 12.sp,
+                                    text = "Tanggal Pinjam",
+                                    fontSize = 11.sp,
                                     color = textGray,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = loan.borrowDate ?: "-",
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     color = StoraBlueDark,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -204,154 +194,201 @@ fun DetailLoanHistoryScreen(
                             
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Dikembalikan",
-                                    fontSize = 12.sp,
+                                    text = "Tanggal Kembali",
+                                    fontSize = 11.sp,
                                     color = textGray,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = loan.returnDate ?: "-",
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     color = StoraBlueDark,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
                         
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         
-                        // Return Status
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start
+                        // Return Status Badge
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = returnStatus.second.copy(alpha = 0.1f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = returnStatus.second,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp)
                         ) {
-                            Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "Status Pengembalian",
+                                    text = "Status: ",
                                     fontSize = 12.sp,
                                     color = textGray,
                                     fontWeight = FontWeight.Medium
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = returnStatus.first,
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = returnStatus.second,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                         
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
                         
-                        // Photos Section
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            // Foto Saat Dipinjam
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Foto Saat di Pinjam",
-                                    fontSize = 12.sp,
-                                    color = textGray,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                
-                                Box(
+                        // Items Details Section
+                        Text(
+                            text = "Detail Barang (${loanGroup.size})",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = StoraBlueDark
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Display all items in the group
+                        loanGroup.forEach { item ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(150.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFF5F5F5))
-                                        .border(
-                                            width = 1.dp,
-                                            color = Color(0xFFE0E0E0),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                        .padding(16.dp)
                                 ) {
-                                    if (loan.imageUri != null) {
-                                        Image(
-                                            painter = rememberAsyncImagePainter(Uri.parse(loan.imageUri)),
-                                            contentDescription = "Loan Photo",
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
+                                    // Item Name
+                                    Text(
+                                        text = item.name,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = StoraBlueDark
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    // Item Code and Quantity
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Kode",
+                                                fontSize = 11.sp,
+                                                color = textGray,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = item.code,
+                                                fontSize = 12.sp,
+                                                color = StoraBlueDark,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                        
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Jumlah",
+                                                fontSize = 11.sp,
+                                                color = textGray,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = "${item.quantity}",
+                                                fontSize = 12.sp,
+                                                color = StoraBlueDark,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    // Loan Photo
+                                    if (item.imageUri != null) {
+                                        Text(
+                                            text = "Foto Barang",
+                                            fontSize = 11.sp,
+                                            color = textGray,
+                                            fontWeight = FontWeight.Medium
                                         )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.Image,
-                                            contentDescription = "No Image",
-                                            tint = Color(0xFFBDBDBD),
-                                            modifier = Modifier.size(40.dp)
+                                        
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(120.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0xFFE8E8E8))
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = Color(0xFFD0D0D0),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Image(
+                                                painter = rememberAsyncImagePainter(Uri.parse(item.imageUri)),
+                                                contentDescription = "Item Photo",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                        
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                    }
+                                    
+                                    // Return Photo
+                                    if (item.returnImageUri != null) {
+                                        Text(
+                                            text = "Foto Pengembalian",
+                                            fontSize = 11.sp,
+                                            color = textGray,
+                                            fontWeight = FontWeight.Medium
                                         )
+                                        
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(120.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0xFFE8E8E8))
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = Color(0xFFD0D0D0),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Image(
+                                                painter = rememberAsyncImagePainter(Uri.parse(item.returnImageUri)),
+                                                contentDescription = "Return Photo",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
                                     }
                                 }
                             }
-                            
-                            // Foto Saat Dikembalikan
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Foto Saat di Kembalikan",
-                                    fontSize = 12.sp,
-                                    color = textGray,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(150.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFF5F5F5))
-                                        .border(
-                                            width = 1.dp,
-                                            color = Color(0xFFE0E0E0),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (loan.returnImageUri != null) {
-                                        Image(
-                                            painter = rememberAsyncImagePainter(Uri.parse(loan.returnImageUri)),
-                                            contentDescription = "Return Photo",
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.Image,
-                                            contentDescription = "No Image",
-                                            tint = Color(0xFFBDBDBD),
-                                            modifier = Modifier.size(40.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
-                        // Delete Button
-                        Button(
-                            onClick = { showDeleteDialog = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE53935) // Red
-                            )
-                        ) {
-                            Text(
-                                text = "Delete",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = StoraWhite
-                            )
                         }
                         
                         Spacer(modifier = Modifier.height(24.dp))
@@ -446,10 +483,13 @@ fun DetailLoanHistoryScreen(
                         // Delete Button
                         Button(
                             onClick = {
-                                LoansData.deleteLoanHistory(loan.id)
+                                // Delete all items in the group
+                                loanGroup.forEach { item ->
+                                    LoansData.deleteLoanHistory(item.id)
+                                }
                                 showDeleteDialog = false
                                 
-                                // Set result for previous screen
+                                // Set result for previous screen to show snackbar
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set("history_deleted", true)
