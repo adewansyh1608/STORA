@@ -26,6 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.stora.navigation.Routes
 import com.example.stora.ui.theme.StoraBlueDark
+import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellowButton
 
 /**
@@ -43,9 +44,23 @@ fun StoraBottomNavigationBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Menentukan warna background berdasarkan halaman saat ini
+    val backgroundColor = if (currentRoute == Routes.INVENTORY_SCREEN) {
+        StoraWhite
+    } else {
+        StoraBlueDark
+    }
+
+    // Menentukan warna icon dan text berdasarkan halaman saat ini
+    val isOnInventoryScreen = currentRoute == Routes.INVENTORY_SCREEN
+    val unselectedIconColor = if (isOnInventoryScreen) Color.Gray else Color.White.copy(alpha = 0.6f)
+    val unselectedTextColor = if (isOnInventoryScreen) Color.Gray else Color.White.copy(alpha = 0.6f)
+    val selectedIconColor = StoraYellowButton
+    val selectedTextColor = StoraYellowButton
+
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = StoraBlueDark,
+        color = backgroundColor,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         shadowElevation = 16.dp
     ) {
@@ -85,10 +100,10 @@ fun StoraBottomNavigationBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                    selectedIconColor = selectedIconColor,
+                    selectedTextColor = selectedTextColor,
+                    unselectedIconColor = unselectedIconColor,
+                    unselectedTextColor = unselectedTextColor,
                     indicatorColor = Color.Transparent
                 )
             )
@@ -120,10 +135,10 @@ fun StoraBottomNavigationBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                    selectedIconColor = selectedIconColor,
+                    selectedTextColor = selectedTextColor,
+                    unselectedIconColor = unselectedIconColor,
+                    unselectedTextColor = unselectedTextColor,
                     indicatorColor = Color.Transparent
                 )
             )
@@ -155,10 +170,10 @@ fun StoraBottomNavigationBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = StoraYellowButton,
-                    selectedTextColor = StoraYellowButton,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                    selectedIconColor = selectedIconColor,
+                    selectedTextColor = selectedTextColor,
+                    unselectedIconColor = unselectedIconColor,
+                    unselectedTextColor = unselectedTextColor,
                     indicatorColor = Color.Transparent
                 )
             )

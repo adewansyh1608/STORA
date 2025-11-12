@@ -16,6 +16,7 @@ val StoraYellowButton = Color(0xFFEFBF6A)
 
 val StoraBlue = Color(0xFF37729C)
 
+
 val StoraBlueLight = Color(0xFF7699AE)
 val StoraYellow = Color(0xFFEFBF6A)
 val StoraWhite = Color(0xFFFFFFFF)

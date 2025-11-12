@@ -1,8 +1,11 @@
 package com.example.stora.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -149,6 +152,25 @@ fun EditItemForm(navController: NavHostController, item: InventoryItem) {
             }
         }
     }
+    
+    // Permission request launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted, launch camera
+            val photoFile = File(
+                context.cacheDir,
+                "photo_${System.currentTimeMillis()}.jpg"
+            )
+            cameraImageUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photoFile
+            )
+            cameraLauncher.launch(cameraImageUri!!)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -255,16 +277,29 @@ fun EditItemForm(navController: NavHostController, item: InventoryItem) {
                 },
                 onCameraClick = {
                     showPhotoOptions = false
-                    val photoFile = File(
-                        context.cacheDir,
-                        "photo_${System.currentTimeMillis()}.jpg"
-                    )
-                    cameraImageUri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        photoFile
-                    )
-                    cameraLauncher.launch(cameraImageUri!!)
+                    // Check camera permission
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) -> {
+                            // Permission already granted, launch camera
+                            val photoFile = File(
+                                context.cacheDir,
+                                "photo_${System.currentTimeMillis()}.jpg"
+                            )
+                            cameraImageUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                photoFile
+                            )
+                            cameraLauncher.launch(cameraImageUri!!)
+                        }
+                        else -> {
+                            // Request permission
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
                 }
             )
         }
