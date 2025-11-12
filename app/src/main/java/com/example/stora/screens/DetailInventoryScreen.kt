@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -103,34 +105,116 @@ fun DetailInventoryScreen(navController: NavHostController, itemId: String?) {
         }
     }
     
-    // Delete Confirmation Dialog
+    // Modern Delete Confirmation Dialog
     if (showDeleteDialog && item != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Hapus Item") },
-            text = { Text("Apakah Anda yakin ingin menghapus ${item.name}?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        DummyData.inventoryItemList.remove(item)
-                        showDeleteDialog = false
-                        navController.popBackStack()
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color.Red
+        val textGray = Color(0xFF585858)
+        
+        Dialog(onDismissRequest = { showDeleteDialog = false }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = StoraWhite
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Icon
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(40.dp))
+                            .background(Color(0xFFFFEBEE)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete",
+                            tint = Color(0xFFE53935),
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
+                    
+                    // Title
+                    Text(
+                        text = "Hapus Item?",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = StoraBlueDark
                     )
-                ) {
-                    Text("Hapus")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
-                    Text("Batal")
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Description
+                    Text(
+                        text = "Item ${item.name} akan dihapus secara permanen dan tidak dapat dikembalikan.",
+                        fontSize = 14.sp,
+                        color = textGray,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 20.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(28.dp))
+                    
+                    // Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Cancel Button
+                        OutlinedButton(
+                            onClick = { showDeleteDialog = false },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.5.dp, Color(0xFFE0E0E0)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = textGray
+                            )
+                        ) {
+                            Text(
+                                text = "Batal",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        
+                        // Delete Button
+                        Button(
+                            onClick = {
+                                DummyData.inventoryItemList.remove(item)
+                                showDeleteDialog = false
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935)
+                            )
+                        ) {
+                            Text(
+                                text = "Hapus",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StoraWhite
+                            )
+                        }
+                    }
                 }
             }
-        )
+        }
     }
 }
 
