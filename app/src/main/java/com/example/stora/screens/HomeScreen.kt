@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -45,12 +46,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.stora.ui.theme.StoraBlueDark
+import com.example.stora.viewmodel.UserProfileViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
@@ -79,7 +84,7 @@ val dummyReminders = listOf(
  * Composable utama untuk HomeScreen
  */
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(navController: NavHostController, userProfileViewModel: UserProfileViewModel) {
     var isReminderExpanded by rememberSaveable { mutableStateOf(false) }
 
     Box(
@@ -91,7 +96,7 @@ fun HomeScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxSize()
         ) {
             // Top Bar
-            StoraTopBar(navController = navController)
+            StoraTopBar(navController = navController, userProfileViewModel = userProfileViewModel)
 
             // Summary Cards dengan animasi alpha dan offset
             val cardsAlpha by animateFloatAsState(
@@ -181,7 +186,8 @@ fun HomeScreen(navController: NavHostController) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StoraTopBar(navController: NavHostController) {
+private fun StoraTopBar(navController: NavHostController, userProfileViewModel: UserProfileViewModel) {
+    val userProfile by userProfileViewModel.userProfile.collectAsStateWithLifecycle()
     TopAppBar(
         title = {
             Text(
@@ -194,11 +200,24 @@ private fun StoraTopBar(navController: NavHostController) {
             IconButton(onClick = { 
                 navController.navigate(com.example.stora.navigation.Routes.PROFILE_SCREEN)
             }) {
-                Icon(
-                    imageVector = Icons.Outlined.AccountCircle,
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(32.dp)
-                )
+                if (userProfile.profileImageUri != null) {
+                    // Tampilkan foto profile
+                    AsyncImage(
+                        model = userProfile.profileImageUri,
+                        contentDescription = "Profile",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Tampilkan icon default
+                    Icon(
+                        imageVector = Icons.Outlined.AccountCircle,
+                        contentDescription = "Profile",
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

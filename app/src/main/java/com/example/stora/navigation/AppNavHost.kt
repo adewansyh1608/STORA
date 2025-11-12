@@ -8,7 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.stora.viewmodel.UserProfileViewModel
 import com.example.stora.screens.AddItemScreen
-import com.example.stora.screens.DetailScreen
+import com.example.stora.screens.DetailInventoryScreen
+import com.example.stora.screens.EditInventoryScreen
 import com.example.stora.screens.InventoryScreen
 import com.example.stora.screens.AuthScreen
 import com.example.stora.screens.HomeScreen
@@ -79,7 +80,7 @@ fun AppNavHost(
                 )
             }
         ) {
-            HomeScreen(navController = navController)
+            HomeScreen(navController = navController, userProfileViewModel = userProfileViewModel)
         }
 
         composable(
@@ -118,7 +119,7 @@ fun AppNavHost(
         ) { backStackEntry ->
 
             val itemId = backStackEntry.arguments?.getString("itemId")
-            DetailScreen(navController = navController, itemId = itemId)
+            DetailInventoryScreen(navController = navController, itemId = itemId)
         }
 
         composable(
@@ -137,6 +138,25 @@ fun AppNavHost(
             }
         ) {
             AddItemScreen(navController = navController)
+        }
+
+        composable(
+            route = Routes.EDIT_ITEM_SCREEN,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId")
+            EditInventoryScreen(navController = navController, itemId = itemId)
         }
 
         composable(

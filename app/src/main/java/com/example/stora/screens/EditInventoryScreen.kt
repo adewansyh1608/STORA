@@ -50,15 +50,14 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun AddItemScreen(navController: NavHostController) {
+fun EditInventoryScreen(navController: NavHostController, itemId: String?) {
+    val item = DummyData.inventoryItemList.find { it.id == itemId }
     var isVisible by remember { mutableStateOf(false) }
-
 
     LaunchedEffect(Unit) {
         delay(100)
         isVisible = true
     }
-
 
     val blueBgWeight by animateFloatAsState(
         targetValue = if (isVisible) 0.15f else 1f,
@@ -71,7 +70,6 @@ fun AddItemScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(StoraBlueDark)
     ) {
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -79,15 +77,13 @@ fun AddItemScreen(navController: NavHostController) {
                 .background(StoraBlueDark),
             contentAlignment = Alignment.Center
         ) {
-
             StoraTopBar(
-                title = "Add Items",
+                title = "Edit Item",
                 onBackClick = {
                     navController.popBackStack()
                 }
             )
         }
-
 
         Box(
             modifier = Modifier
@@ -96,67 +92,44 @@ fun AddItemScreen(navController: NavHostController) {
                 .background(StoraWhite)
                 .padding(top = 24.dp)
         ) {
-
             androidx.compose.animation.AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically(animationSpec = tween(800, delayMillis = 200)) { it } + fadeIn(animationSpec = tween(800, delayMillis = 200)),
                 modifier = Modifier.fillMaxSize()
             ) {
-                AddItemForm(navController = navController)
+                if (item != null) {
+                    EditItemForm(navController = navController, item = item)
+                } else {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text("Item tidak ditemukan!", color = Color.Black)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun StoraTopBar(title: String, onBackClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Kembali",
-                tint = StoraYellow
-            )
-        }
-        Text(
-            text = title,
-            color = StoraYellow,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp)
-        )
-    }
-}
-
-@Composable
-fun AddItemForm(navController: NavHostController) {
+fun EditItemForm(navController: NavHostController, item: InventoryItem) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var noinv by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var condition by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var name by remember { mutableStateOf(item.name) }
+    var noinv by remember { mutableStateOf(item.noinv) }
+    var quantity by remember { mutableStateOf(item.quantity.toString()) }
+    var category by remember { mutableStateOf(item.category) }
+    var condition by remember { mutableStateOf(item.condition) }
+    var location by remember { mutableStateOf(item.location) }
+    var date by remember { mutableStateOf(item.date) }
+    var description by remember { mutableStateOf(item.description) }
+    var photoUri by remember { mutableStateOf<Uri?>(item.photoUri?.let { Uri.parse(it) }) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showPhotoOptions by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     
-    // Date picker state
     val calendar = Calendar.getInstance()
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     
-    // Camera URI
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     
-    // Gallery launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -166,7 +139,6 @@ fun AddItemForm(navController: NavHostController) {
         }
     }
     
-    // Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -216,14 +188,12 @@ fun AddItemForm(navController: NavHostController) {
             label = "Lokasi"
         )
         
-        // Date Picker Field
         StoraDatePickerField(
             value = date,
             label = "Tanggal pencatatan",
             onClick = { showDatePicker = true }
         )
         
-        // Photo Input Section
         PhotoInputSection(
             photoUri = photoUri,
             onPhotoOptionsClick = { showPhotoOptions = true },
@@ -248,7 +218,6 @@ fun AddItemForm(navController: NavHostController) {
             )
         }
         
-        // Date Picker Dialog
         if (showDatePicker) {
             val datePickerState = rememberDatePickerState(
                 initialSelectedDateMillis = calendar.timeInMillis
@@ -277,7 +246,6 @@ fun AddItemForm(navController: NavHostController) {
             }
         }
         
-        // Photo Options Dialog
         if (showPhotoOptions) {
             PhotoPickerBottomSheet(
                 onDismiss = { showPhotoOptions = false },
@@ -305,20 +273,21 @@ fun AddItemForm(navController: NavHostController) {
             onClick = {
                 val qtyInt = quantity.toIntOrNull()
                 if (name.isNotBlank() && noinv.isNotBlank() && qtyInt != null && category.isNotBlank() && condition.isNotBlank() && location.isNotBlank() && description.isNotBlank() && date.isNotBlank()) {
-                    val newItem = InventoryItem(
-                        name = name,
-                        noinv = noinv,
-                        quantity = qtyInt,
-                        category = category,
-                        condition = condition,
-                        location = location,
-                        description = description,
-                        date = date,
-                        photoUri = photoUri?.toString()
-                    )
-                    DummyData.inventoryItemList.add(0, newItem)
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle?.set("newItemAdded", true)
+                    val index = DummyData.inventoryItemList.indexOfFirst { it.id == item.id }
+                    if (index != -1) {
+                        DummyData.inventoryItemList[index] = InventoryItem(
+                            id = item.id,
+                            name = name,
+                            noinv = noinv,
+                            quantity = qtyInt,
+                            category = category,
+                            condition = condition,
+                            location = location,
+                            description = description,
+                            date = date,
+                            photoUri = photoUri?.toString()
+                        )
+                    }
                     navController.popBackStack()
                     isError = false
                 } else {
@@ -334,89 +303,9 @@ fun AddItemForm(navController: NavHostController) {
                 contentColor = StoraBlueDark
             )
         ) {
-            Text("Save", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Update", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(32.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun StoraFormField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    singleLine: Boolean = true,
-    keyboardType: KeyboardType = KeyboardType.Text
-) {
-    val fieldColor = Color(0xFFE9E4DE)
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Text(
-            text = label,
-            color = Color.Black,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = fieldColor,
-                unfocusedContainerColor = fieldColor,
-                disabledContainerColor = fieldColor,
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent
-            ),
-            singleLine = singleLine,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun StoraDatePickerField(
-    value: String,
-    label: String,
-    onClick: () -> Unit
-) {
-    val fieldColor = Color(0xFFE9E4DE)
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Text(
-            text = label,
-            color = Color.Black,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick() },
-            enabled = false,
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledContainerColor = fieldColor,
-                disabledTextColor = Color.Black,
-                disabledBorderColor = Color.Transparent
-            ),
-            trailingIcon = {
-                Icon(
-                    Icons.Default.CalendarToday,
-                    contentDescription = "Pilih Tanggal",
-                    tint = Color.Gray
-                )
-            },
-            readOnly = true
-        )
     }
 }
 
@@ -513,163 +402,6 @@ private fun QuantityInputField(
                     color = StoraBlueDark
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun PhotoInputSection(
-    photoUri: Uri?,
-    onPhotoOptionsClick: () -> Unit,
-    onRemovePhoto: () -> Unit
-) {
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Text(
-            text = "Foto Barang",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = StoraBlueDark,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF5F5F5))
-                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
-                .clickable { onPhotoOptionsClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            if (photoUri != null) {
-                AsyncImage(
-                    model = photoUri,
-                    contentDescription = "Foto Barang",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Upload",
-                        tint = Color(0xFF9E9E9E),
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Klik Untuk Mengunggah gambar",
-                        fontSize = 13.sp,
-                        color = Color(0xFF9E9E9E)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PhotoPickerBottomSheet(
-    onDismiss: () -> Unit,
-    onGalleryClick: () -> Unit,
-    onCameraClick: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.White,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        ) {
-            Text(
-                text = "Pilih Sumber Gambar",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Gallery Option
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onGalleryClick)
-                    .padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(StoraBlueDark),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = "Gallery",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Text(
-                    text = "Pilih dari Galeri",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Camera Option
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onCameraClick)
-                    .padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(StoraBlueDark),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Text(
-                    text = "Ambil Foto",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

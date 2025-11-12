@@ -11,5 +11,6 @@ data class InventoryItem(
     val condition : String,
     val location: String,
     val description: String,
-    val date: String
+    val date: String,
+    val photoUri: String? = null
 )

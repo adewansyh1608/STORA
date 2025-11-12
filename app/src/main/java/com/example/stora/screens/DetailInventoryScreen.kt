@@ -5,10 +5,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
@@ -16,11 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.stora.data.DummyData
 import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
@@ -28,9 +35,10 @@ import com.example.stora.ui.theme.StoraYellow
 import kotlinx.coroutines.delay
 
 @Composable
-fun DetailScreen(navController: NavHostController, itemId: String?) {
+fun DetailInventoryScreen(navController: NavHostController, itemId: String?) {
     val item = DummyData.inventoryItemList.find { it.id == itemId }
     var isVisible by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         delay(100)
@@ -57,11 +65,17 @@ fun DetailScreen(navController: NavHostController, itemId: String?) {
             contentAlignment = Alignment.Center
         ) {
 
-            StoraTopBar(
+            DetailTopBar(
                 title = "Detail",
                 onBackClick = {
                     navController.popBackStack()
-                }
+                },
+                onEditClick = if (item != null) {
+                    { navController.navigate("edit_item/${item.id}") }
+                } else null,
+                onDeleteClick = if (item != null) {
+                    { showDeleteDialog = true }
+                } else null
             )
         }
 
@@ -85,6 +99,89 @@ fun DetailScreen(navController: NavHostController, itemId: String?) {
                         Text("Item tidak ditemukan!", color = Color.Black)
                     }
                 }
+            }
+        }
+    }
+    
+    // Delete Confirmation Dialog
+    if (showDeleteDialog && item != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Item") },
+            text = { Text("Apakah Anda yakin ingin menghapus ${item.name}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        DummyData.inventoryItemList.remove(item)
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color.Red
+                    )
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun DetailTopBar(
+    title: String, 
+    onBackClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Kembali",
+                tint = StoraYellow
+            )
+        }
+        Text(
+            text = title,
+            color = StoraYellow,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+        )
+        
+        // Action Icons
+        if (onDeleteClick != null) {
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Hapus",
+                    tint = Color.Red
+                )
+            }
+        }
+        
+        if (onEditClick != null) {
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit",
+                    tint = StoraYellow
+                )
             }
         }
     }
@@ -123,6 +220,26 @@ fun DetailContent(item: com.example.stora.data.InventoryItem) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
+            
+            // Photo Item
+            item.photoUri?.let { photoUriString ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFF5F5F5))
+                        .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                ) {
+                    AsyncImage(
+                        model = photoUriString,
+                        contentDescription = "Foto ${item.name}",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
 
             Column(

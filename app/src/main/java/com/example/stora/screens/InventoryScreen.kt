@@ -34,7 +34,6 @@ import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellow
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(navController: NavHostController) {
