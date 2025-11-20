@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.stora.data.LoansData
-import com.example.stora.navigation.Routes
 import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellow
@@ -62,7 +60,7 @@ fun DetailLoanHistoryScreen(
     
     // Calculate return status based on actual return date vs deadline
     val returnStatus = remember(loan) {
-        if (loan?.borrowDate != null && loan?.returnDate != null && loan?.actualReturnDate != null) {
+        if (loan?.borrowDate != null && loan.returnDate != null && loan?.actualReturnDate != null) {
             try {
                 val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 val returnDateDeadline = sdf.parse(loan.returnDate) // Deadline (tanggal pengembalian yang dijanjikan)
