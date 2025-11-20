@@ -33,15 +33,22 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,6 +64,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.stora.R
 import com.example.stora.navigation.Routes
@@ -64,6 +72,7 @@ import com.example.stora.ui.theme.StoraBlueButton
 import com.example.stora.ui.theme.StoraBlueDark
 import com.example.stora.ui.theme.StoraWhite
 import com.example.stora.ui.theme.StoraYellowButton
+import com.example.stora.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 
 enum class AuthScreenState {
@@ -300,7 +309,25 @@ fun LandingButtons(onLoginClicked: () -> Unit, onSignUpClicked: () -> Unit) {
 }
 
 @Composable
-fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
+fun LoginForm(
+    onSignUpClicked: () -> Unit, 
+    navController: NavHostController,
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val uiState by authViewModel.uiState.collectAsState()
+    
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    
+    // Handle login success
+    LaunchedEffect(uiState.isSuccess, uiState.isLoggedIn) {
+        if (uiState.isSuccess && uiState.isLoggedIn) {
+            navController.navigate(Routes.HOME_SCREEN) {
+                popUpTo(Routes.AUTH_SCREEN) { inclusive = true }
+            }
+            authViewModel.clearState()
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -308,9 +335,23 @@ fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(24.dp))
-        StoraTextField(label = "Email", keyboardType = KeyboardType.Email)
+        
+        StoraTextField(
+            label = "Email", 
+            keyboardType = KeyboardType.Email,
+            value = email,
+            onValueChange = { email = it }
+        )
+        
         Spacer(modifier = Modifier.height(16.dp))
-        StoraTextField(label = "Password", isPassword = true)
+        
+        StoraTextField(
+            label = "Password", 
+            isPassword = true,
+            value = password,
+            onValueChange = { password = it }
+        )
+        
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
@@ -322,10 +363,32 @@ fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
             textAlign = TextAlign.End
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Error Message
+        uiState.errorMessage?.let { error ->
+            androidx.compose.material3.Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                    fontSize = 14.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Button(
-            onClick = { navController.navigate(Routes.HOME_SCREEN) },
+            onClick = {
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    authViewModel.login(email.trim(), password)
+                }
+            },
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
                 containerColor = StoraBlueButton,
@@ -333,9 +396,17 @@ fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(50.dp),
+            enabled = !uiState.isLoading && email.isNotBlank() && password.isNotBlank()
         ) {
-            Text(text = "LOGIN", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = StoraWhite
+                )
+            } else {
+                Text(text = "LOGIN", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -351,61 +422,190 @@ fun LoginForm(onSignUpClicked: () -> Unit, navController: NavHostController) {
 }
 
 @Composable
-fun SignUpForm(onLoginClicked: () -> Unit) {
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Spacer(modifier = Modifier.height(24.dp))
-        StoraTextField(label = "User Name")
-        Spacer(modifier = Modifier.height(16.dp))
-        StoraTextField(label = "Email", keyboardType = KeyboardType.Email)
-        Spacer(modifier = Modifier.height(16.dp))
-        StoraTextField(label = "Password", isPassword = true)
-        Spacer(modifier = Modifier.height(16.dp))
-        StoraTextField(label = "Confirm Password", isPassword = true)
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { /* TODO: Handle Sign Up */ },
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = StoraBlueButton,
-                contentColor = StoraWhite
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        ) {
-            Text(text = "SIGN UP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+fun SignUpForm(
+    onLoginClicked: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val uiState by authViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    
+    // Handle signup success
+    LaunchedEffect(uiState.isSuccess, uiState.isLoggedIn) {
+        if (uiState.isSuccess && uiState.isLoggedIn) {
+            // Show success message
+            snackbarHostState.showSnackbar(
+                message = "Pendaftaran berhasil! Silakan login dengan akun Anda.",
+                duration = androidx.compose.material3.SnackbarDuration.Long
+            )
+            
+            // Clear form fields
+            name = ""
+            email = ""
+            password = ""
+            confirmPassword = ""
+            
+            // Clear auth state
+            authViewModel.clearState()
+            
+            // Navigate back to login after showing message
+            delay(1500)
+            onLoginClicked()
         }
+    }
 
-        Spacer(modifier = Modifier.height(24.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            StoraTextField(
+                label = "User Name",
+                value = name,
+                onValueChange = { name = it }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            StoraTextField(
+                label = "Email", 
+                keyboardType = KeyboardType.Email,
+                value = email,
+                onValueChange = { email = it }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            StoraTextField(
+                label = "Password", 
+                isPassword = true,
+                value = password,
+                onValueChange = { password = it }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            StoraTextField(
+                label = "Confirm Password", 
+                isPassword = true,
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it }
+            )
+            
+            // Password match validation
+            if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                Text(
+                    text = "Password tidak sama",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
-        Text(
-            text = "Login",
-            color = StoraYellowButton,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            modifier = Modifier.clickable { onLoginClicked() }
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Error Message
+            uiState.errorMessage?.let { error ->
+                androidx.compose.material3.Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(12.dp),
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Button(
+                onClick = {
+                    if (name.isNotBlank() && email.isNotBlank() && 
+                        password.isNotBlank() && password == confirmPassword) {
+                        authViewModel.signup(
+                            name.trim(), 
+                            email.trim(), 
+                            password, 
+                            confirmPassword
+                        )
+                    }
+                },
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = StoraBlueButton,
+                    contentColor = StoraWhite
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = !uiState.isLoading && 
+                        name.isNotBlank() && 
+                        email.isNotBlank() && 
+                        password.isNotBlank() && 
+                        password == confirmPassword
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = StoraWhite
+                    )
+                } else {
+                    Text(text = "SIGN UP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Login",
+                color = StoraYellowButton,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.clickable { onLoginClicked() }
+            )
+        }
+        
+        // Snackbar Host positioned at the bottom
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
+
 @Composable
 fun StoraTextField(
     label: String,
     isPassword: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    value: String = "",
+    onValueChange: ((String) -> Unit)? = null
 ) {
-    var text by rememberSaveable { mutableStateOf("") }
+    var internalText by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(!isPassword) }
+    
+    // Use external value if provided, otherwise use internal state
+    val textValue = if (onValueChange != null) value else internalText
+    val textOnValueChange: (String) -> Unit = onValueChange ?: { newValue -> 
+        internalText = newValue 
+    }
 
     OutlinedTextField(
-        value = text,
-        onValueChange = { text = it },
+        value = textValue,
+        onValueChange = textOnValueChange,
         label = { Text(label) },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -426,7 +626,7 @@ fun StoraTextField(
                 val description = if (passwordVisible) "Hide password" else "Show password"
 
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, description)
+                    Icon(imageVector = image, contentDescription = description)
                 }
             }
         }
